@@ -1,6 +1,9 @@
-name: Scheduled Data Acquisition Workflow
+name: Dev Branch Data Acquisition Workflow
 
 on:
+  push:
+    branches:
+      - dev
   schedule:
     - cron: '*/30 * * * *'  # Запускається кожні 30 хвилин
   workflow_dispatch:  # Дозволяє запускати вручну
@@ -12,6 +15,9 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
+      with:
+        ref: dev  # Явно вказуємо, що нам потрібна гілка dev
+        fetch-depth: 0  # Отримуємо повну історію для правильної роботи з гілками
 
     - name: Set up Python
       uses: actions/setup-python@v2
@@ -30,7 +36,6 @@ jobs:
         git remote add upstream $ORIGINAL_REPO_URL
         git fetch upstream
         
-        # Список файлів для пошуку та оновлення
         files_to_update=(
           "transfermarkt-scraper.dvc"
           "transfermarkt-api.dvc"
@@ -40,29 +45,32 @@ jobs:
         updated=false
         
         for file in "${files_to_update[@]}"; do
-          # Пошук файлу в репозиторії
           file_path=$(find . -name "$file" -not -path '*/\.*' -type f -print -quit)
           
           if [ -n "$file_path" ]; then
             echo "Updating $file_path"
-            git checkout upstream/main -- "$file"
-            mv "$file" "$file_path"
-            if git diff --quiet HEAD "$file_path"; then
-              echo "No changes in $file_path"
+            git checkout upstream/master -- "$file"
+            if [ -f "$file" ]; then
+              mv "$file" "$file_path"
+              if git diff --quiet HEAD "$file_path"; then
+                echo "No changes in $file_path"
+              else
+                git add "$file_path"
+                updated=true
+              fi
             else
-              git add "$file_path"
-              updated=true
+              echo "File $file not found in upstream/master"
             fi
           else
-            echo "File $file not found in the repository"
+            echo "File $file not found in the local repository"
           fi
         done
         
         if [ "$updated" = true ]; then
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git commit -m "Update DVC files from upstream"
-          git push
+          git commit -m "Update DVC files from upstream/master"
+          git push origin dev
         else
           echo "No updates to DVC files"
         fi
@@ -76,10 +84,6 @@ jobs:
     - name: Install dependencies
       run: |
         poetry install
-
-    - name: Activate virtual environment
-      run: |
-        poetry shell
 
     - name: DVC pull
       run: |
