@@ -1,3 +1,10 @@
+{{ config(
+    materialized='incremental',
+    unique_key=['player_id', 'transfer_date', 'from_club_id', 'to_club_id'],
+    file_format='parquet',
+    incremental_strategy='delete+insert'
+) }}
+
 with transfers_cte as (
 
     select * from {{ ref('base_transfers') }}

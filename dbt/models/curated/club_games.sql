@@ -1,3 +1,10 @@
+{{ config(
+    materialized='incremental',
+    unique_key=['game_id', 'club_id'],
+    file_format='parquet',
+    incremental_strategy='delete+insert'
+) }}
+
 with games_cte as (
 
     select * from {{ ref('base_games') }}

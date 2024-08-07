@@ -13,7 +13,7 @@
     {% set str_factor %}
         regexp_extract({{ expression }}, '{{ regex }}', 3)
     {% endset %}
-    
+
     {% set factor %}
         case
             when {{ str_factor }} in ('Th', 'k') then 1e3
@@ -22,7 +22,7 @@
     {% endset %}
 
     (({{ number }})*({{ factor }}))::integer
-  
+
 {% endmacro %}
 
 
@@ -37,10 +37,21 @@
     {% endset %}
 
     {% set month_and_day %}
-      case when ({{ month_and_day_str }}) ~ '[a-zA-Z]{3} [0-9]+' then {{ month_and_day_str }}
-      else {{ month_and_day_str }} || ' 1' end
+      case 
+        when ({{ month_and_day_str }}) ~ '[a-zA-Z]{3} [0-9]+' then {{ month_and_day_str }}
+        when ({{ month_and_day_str }}) ~ '[a-zA-Z]{3}' then {{ month_and_day_str }} || ' 1'
+        else null
+      end
     {% endset %}
 
-    strptime({{ month_and_day }} || ', ' || {{ year_str }}, '%b %d, %Y')
-  
+    {% set full_date_str %}
+      case 
+        when {{ month_and_day }} is not null and {{ year_str }} ~ '[0-9]{4}' 
+        then {{ month_and_day }} || ', ' || {{ year_str }}
+        else null
+      end
+    {% endset %}
+
+    try_cast(strptime({{ full_date_str }}, '%b %d, %Y') as date)
+
 {% endmacro %}

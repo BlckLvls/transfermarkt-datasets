@@ -1,3 +1,10 @@
+{{ config(
+    materialized='incremental',
+    unique_key=['appearance_id'],
+    file_format='parquet',
+    incremental_strategy='delete+insert'
+) }}
+
 with appearances_cte as (
 
     select * from {{ ref('base_appearances') }}

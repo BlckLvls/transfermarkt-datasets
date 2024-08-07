@@ -1,3 +1,10 @@
+{{ config(
+    materialized='incremental',
+    unique_key='competition_id',
+    file_format='parquet',
+    incremental_strategy='delete+insert'
+) }}
+
 select 
     *,
     case when competition_id in (

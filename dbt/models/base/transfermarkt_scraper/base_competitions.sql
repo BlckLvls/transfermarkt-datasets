@@ -1,3 +1,7 @@
+{{ config(
+    materialized='table',
+    file_format='parquet'
+) }}
 
 with
     json_competitions as (

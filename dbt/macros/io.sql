@@ -1,5 +1,5 @@
 {#
-    Export a model to the prep folder in a CSV format.
+    Export a model to the prep folder in a Parquet format.
 
     Arguments:
       - relation: the model to be exported.
@@ -11,7 +11,7 @@
 
   {% if model_config.enabled %}
       {% call statement(name, fetch_result=True) %}
-        COPY {{ relation }} TO '../data/prep/{{ model.name }}.csv.gz' (HEADER, DELIMITER ',', COMPRESSION gzip)
+        COPY {{ relation }} TO '../data/parquet/{{ model.name }}.parquet' (FORMAT PARQUET)
       {% endcall %}
   {% else %}
       SELECT 1
