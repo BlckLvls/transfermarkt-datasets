@@ -1,3 +1,10 @@
+{{ config(
+    materialized='incremental',
+    unique_key='game_event_id',
+    file_format='parquet',
+    incremental_strategy='delete+insert'
+) }}
+
 with game_events_cte as (
 
     select * from {{ ref('base_game_events') }}

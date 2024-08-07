@@ -1,3 +1,8 @@
+{{ config(
+    materialized='table',
+    file_format='parquet'
+) }}
+
 with
     json_game_lineups as (
 

@@ -5,6 +5,9 @@ transfermarkt_datasets:
       type: duckdb
       path: duck.db
       schema: dev
+      extensions:
+        - parquet
+        - httpfs
     prod:
       <<: *dev_target
       schema: prod

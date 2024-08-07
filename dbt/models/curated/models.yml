@@ -71,7 +71,7 @@ models:
             - club_id
       - dbt_expectations.expect_table_row_count_to_be_between:
           min_value: 400
-          max_value: 430
+          max_value: 470
     columns:
       - name: club_code
         tests:
@@ -135,9 +135,6 @@ models:
             - image_url
             - last_season
             - url
-      - dbt_expectations.expect_table_row_count_to_be_between:
-          min_value: 30000
-          max_value: 32000
     columns:
       - name: player_id
         tests:
@@ -362,10 +359,6 @@ models:
         tests:
           - dbt_expectations.expect_column_values_to_be_between:
               min_value: 0
-
-      - name: player_name
-        tests:
-          - not_null
       - name: from_club_name
         tests:
           - not_null

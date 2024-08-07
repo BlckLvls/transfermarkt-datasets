@@ -1,0 +1,14 @@
+{% macro export_to_gcs(model) %}
+  {% set schema = model.schema %}
+  {% set identifier = model.identifier %}
+  {% set gcs_path = "gs://" ~ var('gcs_bucket') ~ "/" ~ schema ~ "/" ~ identifier ~ ".parquet" %}
+
+  {% set export_query %}
+    COPY (SELECT * FROM {{ model }}) TO '{{ gcs_path }}'
+    (FORMAT 'parquet', ALLOW_OVERWRITE TRUE);
+  {% endset %}
+
+  {% do run_query(export_query) %}
+
+  {{ log("Exported data to " ~ gcs_path, info=True) }}
+{% endmacro %}

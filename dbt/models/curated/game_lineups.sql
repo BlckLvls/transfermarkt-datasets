@@ -1,8 +1,11 @@
-{{
-  config(
-    enabled = false,
-    )
-}}
+{{ config(
+    materialized='incremental',
+    unique_key='game_lineups_id',
+    file_format='parquet',
+    incremental_strategy='delete+insert',
+    enabled=false
+) }}
+
 with game_lineups_cte as (
 
     select * from {{ ref('base_game_lineups') }}

@@ -1,3 +1,8 @@
+{{ config(
+    materialized='table',
+    file_format='parquet'
+) }}
+
 with
     json_players as (
 
@@ -6,9 +11,8 @@ with
             json(value) as json_row,
             (str_split(json_extract_string(json_row, '$.href'), '/')[5])::integer as player_id,
             row_number() over (partition by player_id order by season desc) as n
-        
+
         from {{ source("transfermarkt_scraper", "players") }}
-        
 
     )
 
@@ -83,7 +87,7 @@ select
     then trim(regexp_replace((json_row ->> 'height')[:4], '[,\s´]', ''))::integer
     else null
     end as height_in_cm,
-    {{ parse_contract_expiration_date("json_row ->> 'contract_expires'")}} as contract_expiration_date,
+    {{ parse_contract_expiration_date("json_row ->> 'contract_expires'") }} as contract_expiration_date,
     json_row -> 'player_agent' ->> 'name' as agent_name,
     json_extract_string(json_row, '$.image_url') as image_url,
     'https://www.transfermarkt.co.uk' || json_extract_string(json_row, '$.href') as url
@@ -91,3 +95,7 @@ select
 from json_players
 
 where n = 1
+  and (
+    {{ parse_contract_expiration_date("json_row ->> 'contract_expires'") }} is not null
+    or json_extract_string(json_row, '$.contract_expires') in ('N/A', 'null', '')
+  )

@@ -1,3 +1,10 @@
+{{ config(
+    materialized='incremental',
+    unique_key='player_id',
+    file_format='parquet',
+    incremental_strategy='delete+insert'
+) }}
+
 with players_cte as (
 
     select * from {{ ref('base_players') }}

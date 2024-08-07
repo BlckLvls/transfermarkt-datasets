@@ -1,3 +1,10 @@
+{{ config(
+    materialized='incremental',
+    unique_key=['player_id', 'date'],
+    file_format='parquet',
+    incremental_strategy='delete+insert'
+) }}
+
 with market_value_development_cte as (
 
     select * from {{ ref('base_market_value_development') }}

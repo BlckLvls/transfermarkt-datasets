@@ -1,9 +1,10 @@
-with clubs_cte as (
-
-    select * from {{ ref('base_clubs') }}
-
-)
+{{ config(
+    materialized='incremental',
+    unique_key='club_id',
+    file_format='parquet',
+    incremental_strategy='delete+insert'
+) }}
 
 select *
 
-from clubs_cte
+from {{ ref('base_clubs') }}
