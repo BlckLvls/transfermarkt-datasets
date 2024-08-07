@@ -1,0 +1,94 @@
+name: Scheduled Data Acquisition Workflow
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'  # Запускається кожні 30 хвилин
+  workflow_dispatch:  # Дозволяє запускати вручну
+
+jobs:
+  acquire_data:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+
+    - name: Install Git and DVC
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y git
+        pip install dvc
+
+    - name: Update DVC files
+      run: |
+        ORIGINAL_REPO_URL="https://github.com/dcaribou/transfermarkt-datasets.git"
+        git remote add upstream $ORIGINAL_REPO_URL
+        git fetch upstream
+        
+        # Список файлів для пошуку та оновлення
+        files_to_update=(
+          "transfermarkt-scraper.dvc"
+          "transfermarkt-api.dvc"
+          "prep.dvc"
+        )
+        
+        updated=false
+        
+        for file in "${files_to_update[@]}"; do
+          # Пошук файлу в репозиторії
+          file_path=$(find . -name "$file" -not -path '*/\.*' -type f -print -quit)
+          
+          if [ -n "$file_path" ]; then
+            echo "Updating $file_path"
+            git checkout upstream/main -- "$file"
+            mv "$file" "$file_path"
+            if git diff --quiet HEAD "$file_path"; then
+              echo "No changes in $file_path"
+            else
+              git add "$file_path"
+              updated=true
+            fi
+          else
+            echo "File $file not found in the repository"
+          fi
+        done
+        
+        if [ "$updated" = true ]; then
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git commit -m "Update DVC files from upstream"
+          git push
+        else
+          echo "No updates to DVC files"
+        fi
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Install Poetry
+      run: |
+        curl -sSL https://install.python-poetry.org | python3 -
+
+    - name: Install dependencies
+      run: |
+        poetry install
+
+    - name: Activate virtual environment
+      run: |
+        poetry shell
+
+    - name: DVC pull
+      run: |
+        dvc pull
+
+    - name: Run transfermarkt-scraper
+      run: |
+        make acquire_local ACQUIRER=transfermarkt-scraper ARGS="--season 2024 --asset all"
+
+    - name: Run transfermarkt-api
+      run: |
+        make acquire_local ACQUIRER=transfermarkt-api ARGS="--season 2024"
